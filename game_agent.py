@@ -10,6 +10,45 @@ class SearchTimeout(Exception):
     pass
 
 
+# This is for my be agressive / run away scoring. I like this as a sub strategy for always targeting the enemy.
+# I want custom score 2 and 3 to be aggressive and move towards the enemy and run away.
+# custom score 1 will be the flagship
+# This is just a really easy way to have some basic strategies.
+def distance_to_enemy(game, me, enemy):
+    my_locale = game.get_player_location(me)
+    enemy_locale = game.get_player_location(enemy)
+    x_dist = (my_locale[0] - enemy_locale[0]) ** 2
+    y_dist = (my_locale[1] - enemy_locale[1]) ** 2
+    total_distance = x_dist + y_dist
+    return float(total_distance)
+
+
+# This blocks the enemy player when they only have one move remaining.
+# Pretty sure if we have the time to calculate this we should always stomp out the enemy
+# So this can be incorporated into any strategy so long as there is any computing time.
+def ko_move(game, me, enemy, my_moves):
+    value = 0
+    spot = enemy_moves[0]
+    for move in my_moves:
+        if move == spot:
+            value = float('inf')
+    return value
+
+
+# This function figures out the percent of moves used for the board space.
+# Most games start getting harder when there is about 35-45% of the board taken up.
+# Our strategy needs to change if this is so.
+# We're going to assume 49 spaces. But this can be generalized to any board size.
+# As the number of spaces increases, the limiting factor becomes the square perimeters of the board.
+# 25% of the board taken up, means there's about 2-3 perimeters remaining.
+# The only reason I don't generalize is because it's more efficient.
+# You should always be more efficient when you have the resources to be.
+# If the enemy player is using the flee strategy than this is advantageous as well.
+def percent_moves_used(blank_space):
+    percent_blank = (blank_space) / 49
+    return float(percent_blank)
+
+
 def custom_score(game, player):
     """Calculate the heuristic value of a game state from the point of view
     of the given player.
@@ -36,7 +75,25 @@ def custom_score(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    return float(len(game.get_legal_moves(player)))
+    # This will be our beginning strategy.
+    # Stay as close to the center as possible
+    # Do this as long as 75% of the spaces remain open on the board.
+    # I copied this code from the center sample player. It's a good strategy for the beginning.
+    a = game.get_blank_spaces()
+    if percent_moves_used(float(len(a))) < float(0.65):
+        w, h = game.width / 2., game.height / 2.
+        y, x = game.get_player_location(player)
+        return float((h - y) ** 2 + (w - x) ** 2)
+
+    # Do we have any KO's?
+    enemy_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    if enemy_moves == 1:
+        my_moves = get_legal_moves(me)
+        return ko_move(game, player, game.get_opponent(player), my_moves)
+
+    else:
+        # If I can't kill you, I need to get some space and be alone.
+        return float(len(game.get_legal_moves(player)))
 
 
 def custom_score_2(game, player):
@@ -58,7 +115,14 @@ def custom_score_2(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
-    raise NotImplementedError
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    # Let's run away.
+    return distance_to_enemy(game, player, game.get_opponent(player))
 
 
 def custom_score_3(game, player):
@@ -80,8 +144,14 @@ def custom_score_3(game, player):
         The heuristic value of the current game state to the specified player.
     """
     # TODO: finish this function!
-    raise NotImplementedError
+    if game.is_loser(player):
+        return float("-inf")
 
+    if game.is_winner(player):
+        return float("inf")
+
+    # Let's be really aggressive
+    return 1/distance_to_enemy(game, player, game.get_opponent(player))
 
 class IsolationPlayer:
     """Base class for minimax and alphabeta agents -- this class is never
