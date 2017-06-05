@@ -26,13 +26,24 @@ def distance_to_enemy(game, me, enemy):
 # This blocks the enemy player when they only have one move remaining.
 # Pretty sure if we have the time to calculate this we should always stomp out the enemy
 # So this can be incorporated into any strategy so long as there is any computing time.
-def ko_move(game, me, enemy, my_moves):
+def ko_move(game, me, enemy_moves, my_moves):
     value = 0
     spot = enemy_moves[0]
     for move in my_moves:
         if move == spot:
             value = float('inf')
     return value
+
+
+def ko_match(my_moves, enemy_moves):
+    check = False
+    spot = enemy_moves
+    for move in my_moves:
+        if move == spot:
+            check = True
+        else:
+            check = False
+    return check
 
 
 # This function figures out the percent of moves used for the board space.
@@ -80,20 +91,19 @@ def custom_score(game, player):
     # Do this as long as 75% of the spaces remain open on the board.
     # I copied this code from the center sample player. It's a good strategy for the beginning.
     a = game.get_blank_spaces()
-    if percent_moves_used(float(len(a))) < float(0.65):
+    if percent_moves_used(float(len(a))) < float(0.62):
         w, h = game.width / 2., game.height / 2.
         y, x = game.get_player_location(player)
         return float((h - y) ** 2 + (w - x) ** 2)
 
-    # Do we have any KO's?
-    enemy_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    if enemy_moves == 1:
-        my_moves = get_legal_moves(me)
-        return ko_move(game, player, game.get_opponent(player), my_moves)
+        # Do we have any KO's?
+        # enemy_moves = game.get_legal_moves(game.get_opponent(player))
+        # num_enemy_moves = len(enemy_moves)
+        # if num_enemy_moves == 1 & ko_match(game.get_legal_moves(player), enemy_moves) == True:
+        # return ko_move(game, player, enemy_moves, game.get_legal_moves(player))
 
-    else:
         # If I can't kill you, I need to get some space and be alone.
-        return float(len(game.get_legal_moves(player)))
+    return float(len(game.get_legal_moves(player)))
 
 
 def custom_score_2(game, player):
@@ -151,7 +161,8 @@ def custom_score_3(game, player):
         return float("inf")
 
     # Let's be really aggressive
-    return 1/distance_to_enemy(game, player, game.get_opponent(player))
+    return 1 / distance_to_enemy(game, player, game.get_opponent(player))
+
 
 class IsolationPlayer:
     """Base class for minimax and alphabeta agents -- this class is never
@@ -547,7 +558,7 @@ class AlphaBetaPlayer(IsolationPlayer):
             raise SearchTimeout()
         if depth == 0:
             # I was stuck on this part for a very long time.
-            # I am a fool.
+            # I couldn't understand to call this on the inactive player.
             return self.score(game, game.inactive_player)
 
         opt_score = float("inf")
