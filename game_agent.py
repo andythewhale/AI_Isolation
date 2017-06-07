@@ -10,7 +10,48 @@ class SearchTimeout(Exception):
     pass
 
 
-# This is for my be agressive / run away scoring. I like this as a sub strategy for always targeting the enemy.
+# I'm making this up as I go:
+def bojack_algorithm(game, player):
+    # The hit show Bojack Horseman is a show about an animated Horse-man
+    # Bojack is always running away from his problems
+    # He runs away from the fundamental problems in life
+    # However he does complete some very challenging side-quests that allow him to sustain himself
+    # Bojack's character is a show about resilience.
+    # It's a show about a person in a bad spot who seemingly has everything.
+    # Bojack Horseman is a 10/10 TV show and you should watch it.
+
+    # In this algorithm, Bojack, our hero, will value the following things:
+    # Distance from the problem (the enemy player)
+    # The amount of running space available at future positions
+    # The current state of the game
+    # I also want to train this network using tensorflow, but I'm not sure how to get the outputs.
+
+    # The output should give us the highest value move based on the state of the game.
+
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    # total_available_space is the changing value variable that depends on the game state.
+    # In the beginning, we have a lot of options, so we should probably just run around our problems.
+    a = len(game.get_blank_spaces())
+    total_available_space = float(percent_moves_used(a))
+
+    #Distance to our enemy
+    problem_distance = float(distance_to_enemy(game, player, game.get_opponent(player)))
+
+    #Open run space at next location:
+    run_space = float(len(game.get_legal_moves(player)))
+
+    return (((1/total_available_space)*problem_distance) + total_available_space*run_space)
+
+
+
+
+
+# This is for my be aggressive / run away scoring. I like this as a sub strategy for always targeting the enemy.
 # I want custom score 2 and 3 to be aggressive and move towards the enemy and run away.
 # custom score 1 will be the flagship
 # This is just a really easy way to have some basic strategies.
